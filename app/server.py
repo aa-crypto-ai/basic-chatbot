@@ -13,9 +13,11 @@ def predict(model_name, message, history):
     chat_model = ChatOpenRouter(model_name=model_name)
 
     history_langchain_format = []
-    for human_msg, ai_msg in history:
-        history_langchain_format.append(HumanMessage(content=human_msg))
-        history_langchain_format.append(AIMessage(content=ai_msg))
+    for msg in history:
+        if msg['role'] == "user":
+            history_langchain_format.append(HumanMessage(content=msg['content']))
+        elif msg['role'] == "assistant":
+            history_langchain_format.append(AIMessage(content=msg['content']))
 
     history_langchain_format.append(HumanMessage(content=message))
 
@@ -27,13 +29,14 @@ def respond(msg, chat_history, model_name):
     if not msg.strip():
         return "", chat_history
     bot_msg = predict(model_name, msg, chat_history)
-    chat_history.append((msg, bot_msg))
+    chat_history.append({"role": "user", "content": msg})
+    chat_history.append({"role": "assistant", "content": bot_msg})
     return "", chat_history
 
 if __name__ == '__main__':
     with gr.Blocks() as demo:
         model_selector = gr.Dropdown(models, label="Select Model", value="openai/gpt-4o-mini")
-        chatbot = gr.Chatbot(type="tuples")
+        chatbot = gr.Chatbot(type="messages")
         msg = gr.Textbox(label="Your Message", submit_btn=True)
         msg.submit(respond, [msg, chatbot, model_selector], [msg, chatbot])
 
