@@ -4,7 +4,9 @@ from utils.langchain_adapter import ChatOpenRouter
 
 models = [
     ("OpenAI - ChatGPT 4o mini",    "openai/gpt-4o-mini"),
+    ("Google Gemini 2.0 Flash Lite","google/gemini-2.0-flash-lite-001"),
     ("Claude Sonnet 3.7",           "anthropic/claude-3.7-sonnet"),
+    ("Claude Sonnet 3.7 (thinking)","anthropic/claude-3.7-sonnet:thinking"),
     ("Llama 3.1 70B",               "meta-llama/llama-3.1-70b-instruct:free"),  # actually not free
 ]
 
