@@ -1,6 +1,6 @@
 # Introduction
 
-This is a simple chatbot with model selection for users with OpenRouter API access. Model selection interface will be done soon. Currently it is hardcoded to be ChatGPT 4o mini.
+This is a simple chatbot with model selection for users with OpenRouter API access.
 
 # Usage
 
