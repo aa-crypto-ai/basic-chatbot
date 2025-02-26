@@ -2,6 +2,8 @@
 
 This is a simple chatbot with model selection for users with OpenRouter API access.
 
+![Chatbot Demo](demo.png)
+
 # Usage
 
 ```
