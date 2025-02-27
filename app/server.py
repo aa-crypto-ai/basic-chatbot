@@ -49,7 +49,7 @@ if __name__ == '__main__':
     model_choices = [(model_conf['display_name'], model_name) for model_name, model_conf in models.items()]
     model_name_default = 'openai/gpt-4o-mini'
 
-    with gr.Blocks(fill_height=True) as demo:
+    with gr.Blocks(title='Chatbot', fill_height=True) as demo:
 
         with gr.Row():
 
