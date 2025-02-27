@@ -10,7 +10,7 @@ models = [
     ("Llama 3.1 70B",               "meta-llama/llama-3.1-70b-instruct:free"),  # actually not free
 ]
 
-def predict(model_name, message, history):
+def predict(message, history, model_name):
 
     chat_model = ChatOpenRouter(model_name=model_name)
 
@@ -22,26 +22,19 @@ def predict(model_name, message, history):
             history_langchain_format.append(AIMessage(content=msg['content']))
 
     history_langchain_format.append(HumanMessage(content=message))
-
     gpt_response = chat_model.invoke(history_langchain_format)
 
     return gpt_response.content
 
-def respond(msg, chat_history, model_name):
-    if not msg.strip():
-        return "", chat_history
-    bot_msg = predict(model_name, msg, chat_history)
-    chat_history.append({"role": "user", "content": msg})
-    chat_history.append({"role": "assistant", "content": bot_msg})
-    return "", chat_history
-
 if __name__ == '__main__':
-    with gr.Blocks() as demo:
-        model_selector = gr.Dropdown(models, label="Select Model", value="openai/gpt-4o-mini")
-        chatbot = gr.Chatbot(type="messages")
-        msg = gr.Textbox(label="Your Message", submit_btn=True)
-        msg.submit(respond, [msg, chatbot, model_selector], [msg, chatbot])
 
+    with gr.Blocks(fill_height=True) as demo:
+        model_selector = gr.Dropdown(models, label="Select Model", value="openai/gpt-4o-mini", scale=0)
+        gr.ChatInterface(
+            predict,
+            type="messages",
+            additional_inputs=[model_selector],
+        )
 
     # for simplicity, force the port to be 7860
     demo.launch(server_name='0.0.0.0', server_port=7860)
