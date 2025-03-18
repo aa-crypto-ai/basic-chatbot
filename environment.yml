@@ -6,10 +6,12 @@ channels:
 dependencies:
   - python=3.12.8
   - pip
+  - fastapi=0.115.11   # for completeness only, since this was installed due to dependency
   - langchain=0.3.19
   - langchain-community=0.3.18
   - openai=1.64.0
   - python-dotenv=1.0.1
+  - uvicorn=0.34.0  # for completeness only
 
   - pip:
     - gradio==5.18.0

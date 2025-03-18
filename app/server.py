@@ -1,3 +1,5 @@
+from fastapi import FastAPI
+import uvicorn
 import gradio as gr
 from langchain.schema import AIMessage, HumanMessage
 from utils.langchain_adapter import ChatOpenRouter
@@ -46,6 +48,8 @@ def cost_fn(evt: gr.SelectData):
 
 if __name__ == '__main__':
 
+    app = FastAPI()
+
     model_choices = [(model_conf['display_name'], model_name) for model_name, model_conf in models.items()]
     model_name_default = 'openai/gpt-4o-mini'
 
@@ -65,6 +69,7 @@ if __name__ == '__main__':
             type="messages",
             additional_inputs=[model_selector],
         )
+        app = gr.mount_gradio_app(app, demo, path='/chatbot')
 
     # for simplicity, force the port to be 7860
-    demo.launch(server_name='0.0.0.0', server_port=7860)
+    uvicorn.run(app, host='0.0.0.0', port=7860)

@@ -15,4 +15,4 @@ cp sample.env ~/.ai-agent-key/master.env
 docker-compose up --build
 ```
 
-Then you can access the chatbot at http://localhost:7860. Note that the port number is fixed with this implementation.
+Then you can access the chatbot at http://localhost:7860/chatbot. Note that the port number is fixed with this implementation.

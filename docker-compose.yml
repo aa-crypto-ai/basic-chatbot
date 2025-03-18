@@ -6,4 +6,6 @@ services:
       context: .
     ports:
       - 7860:7860
+    volumes:
+      - ~/.ai-agent-key:/home/user/.ai-agent-key
     command: "python app/server.py"
