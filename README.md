@@ -9,7 +9,8 @@ This is a simple chatbot with model selection for users with OpenRouter API acce
 ```
 git clone https://github.com/aa-crypto-ai/basic-chatbot.git
 cd basic-chatbot
-cp sample.env master.env
+mkdir ~/.ai-agent-key
+cp sample.env ~/.ai-agent-key/master.env
 # put your OpenRouter API key to master.env
 docker-compose up --build
 ```
