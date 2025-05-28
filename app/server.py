@@ -1,9 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, status
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import gradio as gr
 from langchain.schema import AIMessage, HumanMessage
 from utils.langchain_adapter import ChatOpenRouter
 from app.model_list import models
+from app.auth_routes import auth_router
+from app.auth import get_user_from_session
 
 def predict(message, history, model_name):
 
@@ -46,10 +50,8 @@ def cost_fn(evt: gr.SelectData):
     return cost_to_template(cost_input, cost_output, cost_img)
 
 
-if __name__ == '__main__':
-
-    app = FastAPI()
-
+def create_protected_gradio_app():
+    """Create the Gradio app with authentication wrapper"""
     model_choices = [(model_conf['display_name'], model_name) for model_name, model_conf in models.items()]
     model_name_default = 'openai/gpt-4o-mini'
 
@@ -69,7 +71,59 @@ if __name__ == '__main__':
             type="messages",
             additional_inputs=[model_selector],
         )
-        app = gr.mount_gradio_app(app, demo, path='/chatbot')
+
+        # Add logout button using simple link approach
+        with gr.Row():
+            gr.Button("🚪 Logout", link="/logout")
+
+    return demo
+
+if __name__ == '__main__':
+    app = FastAPI()
+
+    # Mount static files
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    # Include authentication routes
+    app.include_router(auth_router, prefix="/auth")
+
+    # Simple logout endpoint for Gradio button
+    @app.get("/logout")
+    async def logout():
+        # ideally this would better be POST request, but gradio is....
+        response = RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        response.delete_cookie(key="access_token")  # Correct cookie name
+        return response
+
+    # Root redirect to login
+    @app.get("/")
+    async def root():
+        return RedirectResponse(url="/auth/login")
+
+    # Protected chatbot route
+    @app.get("/chatbot")
+    async def chatbot_redirect(request: Request):
+        user = get_user_from_session(request)
+        if not user:
+            return RedirectResponse(url="/auth/login")
+        # If authenticated, continue to gradio app
+        return RedirectResponse(url="/chatbot/")
+
+    # Create and mount the protected Gradio app
+    demo = create_protected_gradio_app()
+
+    # Custom middleware to check authentication for gradio routes
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        # Check if the request is for the chatbot gradio app
+        if request.url.path.startswith("/chatbot/"):
+            user = get_user_from_session(request)
+            if not user:
+                return RedirectResponse(url="/auth/login")
+        response = await call_next(request)
+        return response
+
+    app = gr.mount_gradio_app(app, demo, path='/chatbot')
 
     # for simplicity, force the port to be 7860
     uvicorn.run(app, host='0.0.0.0', port=7860)
