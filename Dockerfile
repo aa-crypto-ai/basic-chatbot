@@ -25,4 +25,4 @@ WORKDIR /usr/src/app/
 
 RUN conda env create -f environment.yml
 
-CMD ["/bin/bash"]
+CMD ["python", "app/server.py"]
