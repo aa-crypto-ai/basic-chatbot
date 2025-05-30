@@ -7,7 +7,7 @@ from langchain.schema import AIMessage, HumanMessage
 from utils.langchain_adapter import ChatOpenRouter
 from app.model_list import models
 from app.auth_routes import auth_router
-from app.auth import get_user_from_session
+from app.auth import get_user_from_session, refresh_token_if_needed, ACCESS_TOKEN_EXPIRE_MINUTES
 
 def predict(message, history, model_name):
 
@@ -55,7 +55,10 @@ def create_protected_gradio_app():
     model_choices = [(model_conf['display_name'], model_name) for model_name, model_conf in models.items()]
     model_name_default = 'openai/gpt-4o-mini'
 
-    with gr.Blocks(title='Chatbot', fill_height=True) as demo:
+    # Include token monitor script
+    head_html = '<script src="/static/js/token-monitor.js"></script>'
+
+    with gr.Blocks(title='Chatbot', fill_height=True, head=head_html) as demo:
 
         with gr.Row():
 
@@ -112,14 +115,38 @@ if __name__ == '__main__':
     # Create and mount the protected Gradio app
     demo = create_protected_gradio_app()
 
-    # Custom middleware to check authentication for gradio routes
+    # Custom middleware to check authentication and refresh tokens for gradio routes
     @app.middleware("http")
     async def auth_middleware(request: Request, call_next):
         # Check if the request is for the chatbot gradio app
         if request.url.path.startswith("/chatbot/"):
+            current_token = request.cookies.get("access_token")
+            if not current_token:
+                return RedirectResponse(url="/auth/login")
+
+            # Try to refresh token if needed (within 2 hours of expiry)
+            new_token = refresh_token_if_needed(current_token, threshold_hours=2)
+
+            # Verify user is still valid
             user = get_user_from_session(request)
             if not user:
                 return RedirectResponse(url="/auth/login")
+
+            # Continue with the request
+            response = await call_next(request)
+
+            # If token was refreshed, update the cookie in response
+            if new_token:
+                response.set_cookie(
+                    key="access_token",
+                    value=new_token,
+                    max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                    httponly=True,
+                    secure=False  # Set to True in production with HTTPS
+                )
+
+            return response
+
         response = await call_next(request)
         return response
 

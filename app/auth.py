@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 import os
 import sqlite3
 from jose import JWTError, jwt
@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 load_dotenv(os.path.expanduser("~/.ai-agent-key/master.env"))
 
 # Security configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
+SECRET_KEY = os.environ['SECRET_KEY']
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -118,6 +118,49 @@ def verify_token(token: str) -> Optional[dict]:
         return {"username": username}
     except JWTError:
         return None
+
+def verify_token_with_expiry(token: str) -> Tuple[Optional[dict], Optional[datetime]]:
+    """Verify JWT token and return user info with expiration time"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        exp_timestamp = payload.get("exp")
+
+        if username is None or exp_timestamp is None:
+            return None, None
+
+        exp_datetime = datetime.utcfromtimestamp(exp_timestamp)
+        return {"username": username}, exp_datetime
+    except JWTError:
+        return None, None
+
+def is_token_near_expiry(token: str, threshold_hours: int = 2) -> bool:
+    """Check if token will expire within threshold hours"""
+    user, exp_time = verify_token_with_expiry(token)
+    if not user or not exp_time:
+        return True  # Treat invalid tokens as expired
+
+    time_remaining = exp_time - datetime.utcnow()
+    threshold = timedelta(hours=threshold_hours)
+
+    return time_remaining <= threshold
+
+def refresh_token_if_needed(token: str, threshold_hours: int = 2) -> Optional[str]:
+    """Refresh token if it's near expiry, return new token or None"""
+    user, exp_time = verify_token_with_expiry(token)
+    if not user or not exp_time:
+        return None
+
+    if is_token_near_expiry(token, threshold_hours):
+        # Create new token with full expiration time
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        new_token = create_access_token(
+            data={"sub": user["username"]},
+            expires_delta=access_token_expires
+        )
+        return new_token
+
+    return None  # No refresh needed
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Get current user from JWT token"""
