@@ -41,7 +41,8 @@ async def login(username: str = Form(...), password: str = Form(...)):
         value=access_token, 
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
-        secure=False  # Set to True in production with HTTPS
+        secure=True,  # Secure for production with HTTPS
+        samesite="lax"  # Additional security for CSRF protection
     )
     return response
 
@@ -51,7 +52,12 @@ async def login(username: str = Form(...), password: str = Form(...)):
 async def logout():
     """Handle logout"""
     response = RedirectResponse(url="/auth/login", status_code=302)
-    response.delete_cookie("access_token")
+    response.delete_cookie(
+        "access_token",
+        secure=True,  # Must match the secure setting used when setting the cookie
+        httponly=True,
+        samesite="lax"
+    )
     return response
 
 @auth_router.get("/check")
@@ -84,7 +90,8 @@ async def refresh_token(request: Request):
             value=new_token,
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             httponly=True,
-            secure=False  # Set to True in production with HTTPS
+            secure=True,  # Secure for production with HTTPS
+            samesite="lax"  # Additional security for CSRF protection
         )
         return response_obj
     else:
