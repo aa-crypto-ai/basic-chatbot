@@ -6,7 +6,7 @@ This is a secure chatbot with user authentication and model selection for users 
 
 # Features
 
-- 🔐 User authentication with login/registration
+- 🔐 User authentication with login (allow existing users only)
 - 🤖 Multiple AI model selection
 - 💰 Real-time cost display for different models
 - 🔒 Session-based access control
@@ -39,24 +39,6 @@ SECRET_KEY="your-very-long-random-secret-key-here"
 
 1. Open your browser and go to http://localhost:7860
 2. You'll be redirected to the login page
-3. Create a new account or log in with existing credentials
-4. Once authenticated, you'll have access to the chatbot interface
-
-## First Time Setup
-
-1. Go to http://localhost:7860
-2. Click "Create Account" on the login page
-3. Fill in your username and password (email is optional)
-4. Click "Create Account" to register
-5. Log in with your new credentials
-6. Start chatting with your selected AI model!
-
-## Security Features
-
-- JWT-based authentication with secure cookies
-- Password hashing using bcrypt
-- Session timeout (30 minutes by default)
-- Protected routes - unauthenticated users are redirected to login
-- User data stored locally in JSON format
+3. Once authenticated, you'll have access to the chatbot interface
 
 Note: The port number is fixed at 7860 with this implementation.
