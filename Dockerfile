@@ -20,9 +20,12 @@ RUN wget https://repo.anaconda.com/archive/Anaconda3-2024.10-1-Linux-x86_64.sh -
 ENV PATH=/home/user/anaconda3/envs/chatbot/bin:/home/user/anaconda3/bin:$PATH
 ENV PYTHONPATH=.
 
-COPY . /usr/src/app/
-WORKDIR /usr/src/app/
 
+WORKDIR /usr/src/app/
+# ensure docker layer hashing
+COPY ./environment.yml .
 RUN conda env create -f environment.yml
+
+COPY . .
 
 CMD ["python", "app/server.py"]
