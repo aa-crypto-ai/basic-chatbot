@@ -7,7 +7,7 @@ models = {
         'display_name': "OpenAI - ChatGPT 4.1",
         'cost': (2, 8, None),
     },
-    "openai/gpt-5-chat": {
+    "openai/gpt-5": {
         'display_name': "OpenAI - ChatGPT 5",
         'cost': (1.25, 10, None),
     },
